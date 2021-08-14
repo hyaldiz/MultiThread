@@ -1,0 +1,43 @@
+
+#include <unistd.h>   sleep vb fonksiyonlar için
+#include <pthreads.h> thread fonksiyonları için
+
+
+1-) THREAD OLUŞTURMA
+
+*-* int pthread_create(pthread_t *thread, const pthread_attr_t *attr,
+                          void *(*start_routine) (void *), void *arg); 
+       --> Thread oluşturmamızı sağlar.
+
+	NOT: Threadlerin stackleri farklıdır.
+	
+2-) THREAD ID'LERININ ALINMASI
+
+*-* pthread_t pthread_self(void);   -> Çağrıldığı thread'te thread'in id'sini döndürür
+	
+	örn;
+	pthread_t tid1 = pthread_self(void);
+	
+	zaten task create yapılırken arguman olarak verilen &id'yle aynı
+	main'inde thread id si vardır.
+
+3-) THREAD SONLANDIRMA
+
+	-->Process'i sonlandırırsak tüm threadler sonlanır.
+	-->exit() kullanılarak process sonlanacağından thredler de sonlanacaktır.
+	   Return le sonlandırılabilir ve BUNA THREAD'IN EXIT KODU DENIR. Bir Thread diğer thread'i
+	   sonlandırabilir.
+        -->pthread_exit(); fonksiyonu ile sonlandırılabilir.
+
+*-* void pthread_exit(void *retval);
+
+	örn; pthread_exit((void*)123);
+	
+	örn; return (void*)450; (thredin return kısmına)
+	
+	örn; exit(...); (direk process sonlanır duruma göre istediğin yerde kullan)
+	
+4-) BIR THREAD'IN BAŞKA BİR THREAD'İ SONLANDIRMASI
+
+	*-* int pthread_cancel(pthread_t thread); (thred'i sonlandırma istediğinde bulunur. Kesin sonlandıracak diye bir durum yok)
+		->Başarı durumunda 0 döndürür.
