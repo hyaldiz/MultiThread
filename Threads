@@ -51,6 +51,30 @@
 		     
 		 GOOGLE'DA pthread_cancel() FONKSIYONUNU ARATARAK BU CANCELATION POINTS FONKSIYONLARINA BAKABILIRSIN.
 		 
+		 
  5-) THREADLERIN BEKLETILMESI VE DETACH DURUMU
  
- 
+ 	 --> pthread_join yazıldığı yerde thread'in bitmesini bekler ve thread bitince devam eder. Akışı yazıldığı yere sabitler.
+ 	 
+ 	 *-* int pthread_join(pthread_t thread , void **retval);  //2. parametreyle thread'in geri dönüş değerini alabiliriz.
+ 	     başarı durumunda 0 başarısızlık durumunda non-zero bir değer döndürür. 
+ 	     
+ 	     örn; pthread_join(tid1,NULL); //thread joinden sonra biter ve cpu zamanı harcamaz
+ 	     
+ 	     NOT: pointer to pointer demek bir pointer'in adresini istiyor demek.
+ 	     
+ 	     örn; void *thread_exit_code;
+ 	     
+ 	     pthread_join(tid1,&thread_exit_code);
+ 	     printf("worker thread exit code:%p\n",thread_exit_code);
+ 	     
+ 	     
+ 	     
+	NOT:BIR THREAD BAŞKA BIR THREADI SONLANDIRIRSA pthread_cancel'la ""PTHREAD_CANCELED"" MACROSU SET OLUR VE BU MACROYU KULLANARAK TESPIT YAPABILIRIZ. (-1) thread'in döönüş değeri -1 olur ce macroda -1'e setlenir!!!
+		
+		pthread_cancel(thd_id_x);	//kullanılırsa  1'e kullanılmazsa 2
+	
+	     if(thread_exit_code == PTHREAD_CANCELED)
+	     	printf("with pthread_canceled\n");		//1
+     	     else
+     	     	printf("without pthread_cancel\n");		//2
