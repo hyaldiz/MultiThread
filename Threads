@@ -41,3 +41,16 @@
 
 	*-* int pthread_cancel(pthread_t thread); (thred'i sonlandırma istediğinde bulunur. Kesin sonlandıracak diye bir durum yok)
 		->Başarı durumunda 0 döndürür.
+		
+		örn; herhangi bir thread'e ait id = thd1_id
+		
+		pthread_cancel(thd1_id);
+		
+		NOT: printf vb cancelation point göremezse thread'i sonlandırmaz!!!!!!
+		     mesela programda uzun bir döngünün içne null statement koyduk altına join koyduk ama thread sonlanmadı. CANCELATION POINT GORMESI LAZIM.
+		     
+		 GOOGLE'DA pthread_cancel() FONKSIYONUNU ARATARAK BU CANCELATION POINTS FONKSIYONLARINA BAKABILIRSIN.
+		 
+ 5-) THREADLERIN BEKLETILMESI VE DETACH DURUMU
+ 
+ 
