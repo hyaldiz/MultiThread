@@ -129,6 +129,65 @@
         	
 	*-* int pthread_mutex_trylock(pthread_mutex_t *mutex); (başarı ->0 başarısız->ERROR NUMBER)
 	
+		->trylock fonksiyonu block modda beklemek yerine başka iş yapar nasıl yani.
+			
+			trylock	//mutex lock durumunda değilse bu kısmı yürütür.
+			if
+			cmd
+			cmd
+			unlock
+			
+			else	//eğer mutex lock duurmdaysa bu kısmı yapar.
+			cmd
+			cmd
+			
+8-)DEADLOCK
+
+	->threadlerin birbirini kilitleyip devam edememesi durumu
+	
+	örn;
+	THREAD1
+		l->t1
+		sleep(1);	//sleep koyulmasa problem yok gibi ama bu olmayacağı anlamına gelmez çok tehlikeli
+		l->t2
+		CMD
+		ul->t1
+		ul->t2
+		
+	THREAD2
+		l->t2
+		l->t1
+		CMD
+		ul->t2
+		ul->t1
+		
+		
+	DEADLOCK ÇÖZÜMÜ
+	
+	THREAD1
+		l->t1
+		sleep(1);	//sleep koyulmasa problem yok gibi ama bu olmayacağı anlamına gelmez çok tehlikeli
+		l->t2
+		CMD
+		ul->t1
+		ul->t2
+		
+	THREAD2
+		l->t1
+		l->t2
+		CMD
+		ul->t1
+		ul->t2
+		
+		
+		NOT: Arkaya arkaya aynı mutex'i lock yaparsak yine deadlock'a gireriz. Bu durumunda bir çözümü vardır ama mutex'e attribute geçerek bu sorunu ortadan kaldırabiliriz.
+		
+		
+		
+
+			
+			
+	
 	
         
         
