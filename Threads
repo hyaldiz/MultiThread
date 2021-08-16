@@ -78,3 +78,71 @@
 	     	printf("with pthread_canceled\n");		//1
      	     else
      	     	printf("without pthread_cancel\n");		//2
+     	     	
+     	     	
+	*-* int pthread_detach(pthread_t thread); (başarı durumunda sıfır başarısızlık durumunda non-zero değer döndürür.)
+	
+	örn; pthread_detach(thd_id_x);
+	     
+	     NOT: Hangi durumda kullanılır-> thread'in geri dönüş değeriyle ilgilenmiyorsak ve join yapmayacaksak thread'in bitmesi beklenmez program sonlandığında thread'de direk sonlanır ve tüm kaynakları iade edilsin sistemi boş yere meşgul etmesin diyoruz thred'i detach duruma sokmak bu anlama gelir.
+	     NOT:detach edilmiş bir thread'e join yaparsak başarısız olur.
+	     
+6-) THREAD SENKRONIZASYONU
+
+	2 task yazma-yazma
+	2 task yazma-okuma vb. aklına gelsin
+	Bağlı liste örneği
+	önemlidir bu senkronizasyonu sağlamak için mutex kullanacağız.
+	
+7-)MUTEX (Mutual Exclusion)
+
+	-->diğer tasklar mutex'i alamazsa kendini wait kuyruğuna alır.
+	
+		mutex-var;
+			lock(mutex-var);
+			cmd;
+			cmd;
+			unlock(mutex-var);
+			
+	--> RTOS'taki task enter critical ve semaphore
+	
+	
+	mutex oluşturma;
+		öncelikle mutex nesnesi global olmak zorundadır. çünkü threadler aynı mutex değişkenini açıp kapatacaktır.
+		
+		pthread_mutex_t g_mutex; //global
+		
+		
+		NOT:mutex tasklar create yapılmadan önce oluşturulmalı -> sebebi tasklar direk başlar ve mutex olmadığı için senkronizasyon bozulur.
+		
+	*-* int pthread_mutex_init(pthread_mutex_t *__mutex,
+			       const pthread_mutexattr_t *__mutexattr); (başarı durumunda sıfır döndürür. Başarısızlık durumunda ERROR NUMBER döndürür.)
+			       
+        *-* int pthread_mutex_lock(pthread_mutex_t *__mutex); (mutex'i lock yapar başarı->0 başarısız ERROR NUMBER)
+        *-* int pthread_mutex_unlock(pthread_mutex_t *__mutex); (mutex'i unlock yapar başarı->0 başarısız ERROR NUMBER)
+        
+        !!!NOT!!! = mutex pthread_mutex_init(); API'ı kullnamadan da init edilebilir.
+        	örn; global olarak tanımlanan pthread_mutex_t g_mutex = PTHREAD_MUTEX_INITIALIZER; macrosu kullanılarak ta mutex init edilebilir.
+        	
+	NOT: mutex'i alamayan thread'ler bloke olur ve wait kuyruğunda beklerler.
+        	
+        	
+	*-* int pthread_mutex_trylock(pthread_mutex_t *mutex); (başarı ->0 başarısız->ERROR NUMBER)
+	
+	
+        
+        
+       
+		
+		
+		
+		
+		
+		
+		
+
+
+     	     	
+     	     	
+     	     	
+
