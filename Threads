@@ -183,6 +183,39 @@
 		NOT: Arkaya arkaya aynı mutex'i lock yaparsak yine deadlock'a gireriz. Bu durumunda bir çözümü vardır ama mutex'e attribute geçerek bu sorunu ortadan kaldırabiliriz.
 		
 		
+9-)MUTEX ATTRIBUTES
+
+	-> Default özellikler kullanmak istemiyorsak muetex_init'e özellikleri belirledikten sonra attribut'un addresini geçmemiz lazım.
+	
+	pubs.opengroup.org sitesinden pthread_mutexattr_settype(); fonksiyonuna geçilecek parametreleri buradan bakabilirsin.
+	
+	*-*int pthread_mutexattr_gettype(const pthread_mutexattr_t *restrict attr,
+       int *restrict type); (başarı durumunda 0, başarısız hata kodu)
+	*-* int pthread_mutexattr_settype(pthread_mutexattr_t *attr, int type); (başarı durumu 0 başarısız hata kodu)
+	
+	NOT: pthread_mutex_init(&mutex,NULL); //buradaki attribute 2 farklı process'in thredleri arasında bu mutex'i kullanabilmek içinde kullanılır.
+	
+	mesela yukarıda arka arkaya aynı mutex'i lock yapmıştık, burada PTHREAD_MUTEX_RECURSIVE macrosunu attribute olarak ayarlarsak buradaki deadlock sorunu çözülmüş olacak.
+	
+	"!!!NOT: Örnek kod thread3 dosyasında verilmiştir."
+	
+	örn;
+	pthread_mutexattr_t mutex_attr;	//mutex'i init etmeden önce attribut'u ayarlarız.
+	pthread_mutexattr_init(&mutex_attr);
+	pthread_mutexattr_settype(&mutex_attr,PTHREAD_MUTEX_RECURSIVE);
+	pthread_mutex_init(&mutex1,&mutex_attr);
+	
+	
+	işimiz bittikten sonra destroy ederiz
+	
+	pthread_mutex_destroy(&mutex1);
+	pthread_mutexattr_destroy(&mutex_attr);
+	
+	!!!NOT!!! = RECURSIVE MUTEXLERDE KAÇ KERE LOCK YAPTIYSAK O KADAR UNLOCK YAPMAMIZ GEREKIR AKSI TAKIRDE PROBLEM CIKARACAKTIR!!!
+
+
+		
+		
 		
 
 			
