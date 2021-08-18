@@ -122,7 +122,7 @@
         *-* int pthread_mutex_unlock(pthread_mutex_t *__mutex); (mutex'i unlock yapar başarı->0 başarısız ERROR NUMBER)
         
         !!!NOT!!! = mutex pthread_mutex_init(); API'ı kullnamadan da init edilebilir.
-        	örn; global olarak tanımlanan pthread_mutex_t g_mutex = PTHREAD_MUTEX_INITIALIZER; macrosu kullanılarak ta mutex init edilebilir.
+        	örn; global olarak tanımlanan pthread_mutex_t g_mutex = PTHREAD_MUTEX_INITIALIZER; macrosu kullanılarak ta mutex init edilebilir(buna static initialize denir.).
         	
 	NOT: mutex'i alamayan thread'ler bloke olur ve wait kuyruğunda beklerler.
         	
@@ -131,15 +131,17 @@
 	
 		->trylock fonksiyonu block modda beklemek yerine başka iş yapar nasıl yani.
 			
-			trylock	//mutex lock durumunda değilse bu kısmı yürütür.
-			if
-			cmd
-			cmd
-			unlock
-			
+			if(trylock==0)
+			{	//mutex lock durumunda değilse bu kısmı yürütür.
+				cmd
+				cmd
+				unlock
+			}
 			else	//eğer mutex lock duurmdaysa bu kısmı yapar.
-			cmd
-			cmd
+			{
+				cmd
+				cmd
+			}
 			
 8-)DEADLOCK
 
@@ -212,6 +214,162 @@
 	pthread_mutexattr_destroy(&mutex_attr);
 	
 	!!!NOT!!! = RECURSIVE MUTEXLERDE KAÇ KERE LOCK YAPTIYSAK O KADAR UNLOCK YAPMAMIZ GEREKIR AKSI TAKIRDE PROBLEM CIKARACAKTIR!!!
+	
+	
+10-)CONDITIONAL VARIABLE(Yeni bir senkronizasyon nesnesi)
+	
+	->BİR THREAD VAR BİR İŞ YAPILDIKTAN SONRA İŞİN DEVAM ETMESİNİ İSTİYORSAK VE O İŞİ BAŞKA BİR THREAD YAPIYORSA CONDITIONAL VARIABLE BU DURUMLARDA KULLANILIR.
+	
+	!!!NOT!!!: Mutexlerle beraber kullanılır.
+	
+	!!!NOT: örn kod thread3 dosyasında
+	
+	örn; 			
+	T1			T2
+	cmd			cmd
+	cmd			cmd
+	sart-----------	
+x)	cmd	      |-------> sart //sart tamamlanırsa akıs T1 de x den devam eder.
+	cmd			cmd
+	
+	->bir thread bir thred'i bir olay olana kadar beklemesini istediğimiz durumlarda ve olay tamamlandıktan sonra akışın devam etmesini istiyorsak şart tamamlanmazsa thread wait kuyruğuna geçer. örnek senaryo porttan veri bekliyoz soketten okuma işlemi gerçekleşti ve diğer thread veriyi  okuyup işlemeye başlayabilir.
+	 	
+		 *-* int pthread_cond_init(pthread_cond_t *restrict cond,const pthread_condattr_t *restrict attr); (başarı 0 başarısız hata kodu)
+		 *-* pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
+		 *-* int pthread_cond_wait(pthread_cond_t *restrict cond,pthread_mutex_t *restrict mutex);	(başarı 0 başarısız hata kodu) //mutex'in kilidini açacaktır.
+		 *-* int pthread_cond_destroy(pthread_cond_t *cond); (başarı 0 başarısız error number)
+		 *-* int pthread_cond_signal(pthread_cond_t *cond); (başarı 0 başarısız error number)	//bir thread'i uyandıracak ama birden fazla thread'ide uyandırabilir.yani en az 1 thread'i uyandırma garantisinde bulunuyor. KONTROLLU KULLANACAZ ISTENMEYEN THREADLER UYANABILIR. TEK BIR THREAD VARSA SIKINTI OLMAYACAKTIR.
+		 
+		 !!!NOT: işlemler tamamlandıktan sonra cond ve mutex destroy edilmeli.
+		 !!!NOT: örnekte while kullanılmasının sebebi sahte uyandırmaları önlemek için.Yani şart sağlanamadan uyanmış mı uyandırılmamış mı onu kontrol etmek için.
+		 !!!NOT: CONDITIONAL VARIABLE THREAD'LERIN ILISKILI OLDUGU DURUMLARDA KULLANILACAK
+		 
+		 
+		 
+ 	ALT BASLIK-) BROADCAST OLAYI
+ 	
+ 		->cond_signal contaxt switch aşamasında herhangi bir thread'i uyandırabilir. en az 1 thread uyandıracağını garanti ediyor bu 1 de olabilir 2 de
+ 		
+ 		*-* int pthread_cond_broadcast(pthread_cond_t *cond); (başarı 0 başarısız hata kodu)(ilgili thread'lerin tümüne sinyal gönderir, broadcast pakete benzer) örn; write yapan thread var ve read yapan bir kaç thread broadcast kullanarak write tamamlandıktan sonra read yapan bütün görevleri bilgilendiriyoruz. asyncron threadlerde cond_signal kullanmak iyi bir yöntem değil sanırım.
+ 		
+ 		!!!NOT: threadleri ayrı ayrı kullanmak istiyorsak cond_signal kullanıp flaglerle oynamamız gerekecektir.
+ 		
+ 		
+ 		!!!NOT: cond_broadcast ve cond_signal CONDITIONAL VARIABLE ILE BLOCKLANMIŞ THREADLERE SINYAL GONDERIR!!!
+		 
+	
+11-)SEMAPHORE
+	
+	->sayaca sahip senkronizasyon, mesela bir kısma 3 tane thread girebilsin istiyorsak semaphore kullanırız. Semaphore sayacı neyse aynı anda o kadar thread girebilir demek.
+	
+	PRODUCER->Uretici thread , CONSUMER->tüketici thread
+	
+	NOT:sistem semaphor ları yerine possix semaphor larını ele alacağız
+	
+	#include <semaphore.h>
+	
+	sem_t semaphore_x;
+	
+	*-* int sem_init(sem_t *sem, int pshared, unsigned value); (başarı 0 başarısız -1(set for errno)) (pshared 1-> processler arası paylaşım enable 0 disable, value->semapore sayacının kaçtane olduğunu belirtir ve aynı anda o kadar thread girebilir.)
+	
+	*-* int sem_trywait(sem_t *sem);
+	*-* int sem_wait(sem_t *sem); (başarı 0, başarısız -1(set errno indicate error.)) (critic koda girerken kullanılan fonksiyon semaphore sayıcını kontrol eder 0 dan farklıysa girer ve semaphore 1 azaltılır.)
+	
+	*-* int sem_post(sem_t *sem); (başarı 0, başarısız -1(set errno indicate error.)) (critic koddan çıkarken kullanılır ve semaphore sayacını 1 arttırır.)
+	
+	*-* int sem_destroy(sem_t *sem); (başarı 0, başarısız -1(set errno indicate error.)) (semaphore u destroy eder.)
+	
+	örn;
+	
+		sem_wait();
+		cmd
+		cmd
+		sem_post();
+		cmd
+		...
+		
+		
+	!!!NOT: TUM THREADLER AYNI ANDA GIRIYOR!!!
+	
+	
+	
+	ALT BASLIK-) PRODUCER_CONSUMER
+	
+	->ortak kullanılan bir buffer var ve buffer'ı daha hızlı çalışması bir taraftan değer üretiliyor bir taraftan tüketiliyor.
+	
+	->üretici tüketici problemlerinde genelde semaphore kullanılır. BUNUDA 
+	 SEMAPHORE KULLANARAK YAPARIZ(SEMAPHORE LARI ÇAPRAZLAMA KULLANACAĞIZ).
+	 
+	 !!!NOT: örnek kod thread5-consumer-producer dosyasında ODEV OLSUN
+	 
+	 !!!NOT: Aynı yeri kullanan threadler varsa Mutex kullanmak lazım
+	 
+ 
+ 12-) READER_WRITER LOCKS (OKUMA YAZMA KILITLERI)
+ 
+ 	->Yeni bir senkronizasyon nesnesi, mutexlere benziyor ama mutexlerden biraz farklı olacak.
+ 	
+ 	-> !!!mutexte lock yaptık unlock yapana kadar, critical sectiona hiç kimse giremez. thread1 lock yaptı thread2 unlock yapamaz mutex böyle bir senkronizasyon nesnesi değil çünkü.
+ 	
+ 	
+ 	-> çok büyük bir array imiz var diyelim örnek olarak 10 diyelim anlaması kolay olsun
+ 	ilk 5 elemanı 1 threade son 5 elemanı bir thred'e okutarak daha performanslı bir okuma sağlayabiliriz. Yada 2 thred'in bir buffer'ı serch etmesini sağlayabiliriz.
+ 	
+ 	->veri yapılarında okuma yazma işlemleri yaparken çok işimize yarayabilir.
+ 	
+ 	*-* int pthread_rwlock_destroy(pthread_rwlock_t *rwlock);
+	*-* int pthread_rwlock_init(pthread_rwlock_t *restrict rwlock,const pthread_rwlockattr_t *restrict attr);
+	*-* pthread_rwlock_t rwlock = PTHREAD_RWLOCK_INITIALIZER;
+	
+	*-* int pthread_rwlock_rdlock(pthread_rwlock_t *rwlock);
+	*-* int pthread_rwlock_tryrdlock(pthread_rwlock_t *rwlock);
+	
+	*-* int pthread_rwlock_rwlock(pthread_rwlock_t *rwlock);
+	*-* int pthread_rwlock_tryrwlock(pthread_rwlock_t *rwlock);		
+		--Bu aralığı critic kodları yazmak için kullanacağız.
+	*-* int pthread_rwlock_unlock(pthread_rwlock_t *rwlock);
+	
+	->yazma amaçlı veya okuma amaçlı critic code.
+	(Yukarıda belirtilen fonk.'lar Başarı durumunda 0 , başarısızlık ERROR_NUMBER)
+ 
+ 	örn;
+ 		read_lock yapıldıysa yazma amaçlı threadler rwlock_t nesnesini alamaz ama okuma amaçlı threadler critical section'ı execute edebilir.Bu şekile birden fazla thread'e read veya write yaptırarak daha fazla zaman kazanmış oluyoruz sanırım. 
+ 	
+ 		
+ 		
+13-)BARRIER OBJECT
+
+	->yeni bir senkronizasyon nesnesi daha
+	
+	->barire'i init ederken 3 geçersek, 3 tane thread bu noktaya ulaşınca akışın devam edeceği anlamına gelir. 3. thread bu noktaya ulaştığında akış threadler için devam edecektir.
+	
+	->kullanım senaryoları; bu iç thread bir işin parçası olabilir ve bir noktaya ulaştıktan sonra işin devam etmesi gerekiyorsa barier object kullanmamız lazım.
+	 Yani 3 thread'inde o noktaya ulaşması lazım.
+	 
+	 çok büyük sayıda sort edilecek sayımız olsun (örn 300k) 1.thread 100k yı 2.thread 100k 3.thread 100k sonra akışa devam.
+	 
+	 *-* pthread_barrier_t g_barrier;	//static initializer macrosu yok.
+	 *-* int pthread_barrier_destroy(pthread_barrier_t *barrier);
+	 *-* int pthread_barrier_init(pthread_barrier_t *restrict barrier,
+const pthread_barrierattr_t *restrict attr, unsigned count); (count o kadar thread'de akış devam etmesi için.)
+	*-* int pthread_barrier_wait(pthread_barrier_t *barrier); (bu kısma gelince sayaç 1 artar.)
+	
+	(Yukarıda belirtilen fonk.'lar Başarı durumunda 0 , başarısızlık ERROR_NUMBER
+	
+	!!!NOT: barrier_wait icin MESELA BARRIER COUNTER = 4 BASARI DURUMUNDA SAYAC 4'E ULASINCA THREADLERDEN BIRI "PTHREAD_BARRIER_SERIAL_THREAD" MACROSUNUN DEGERINI DONDURUR.YANI 3 THREAD'de wait fonksiyonu 0 döndürecek 1 threadde belirtilen macro değerini) 
+	PEKI NEDEN BU MACRO DEGERI DONUYOR-> BIR THREAD'IN SPESIFIK BIR IS YAPMASINI ISTEYEBILIRIZ,AMA HANGISI OLDUGU BELLI DEGIL BIZDE BU MACRO DONDUYSE THREAD_X(herhangi bir thread) SPESIK BIR IS YAPSIN DIYEBILIRIZ VEYA BU MACROYLA DONEN THREAD SPESIFIK BIR IS YAPSINDA DIYEBILIRIZ.
+	
+	!!!NOT: main scope'ta bir thread'tir yani belirtilen tüm multithread fonksiyonları main içinde kullanılabilir.
+	
+	
+	
+14-)SPINLOCK
+
+	
+	
+	 
+	
+
 
 
 		
